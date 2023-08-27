@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/samoei/rssagg/internal/auth"
 	"github.com/samoei/rssagg/internal/database"
 )
 
@@ -34,6 +35,22 @@ func (apiConfig *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Req
 
 	if err != nil {
 		respondWithError(w, 400, fmt.Sprintf("Could not create a user: %v", err))
+		return
+	}
+
+	repondWithJSON(w, 201, databaseUserToUser(user))
+}
+
+func (apiCfg *apiConfig) handleGetUser(w http.ResponseWriter, r *http.Request) {
+	apikey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, 403, fmt.Sprintf("Authentication Error: %v", err))
+		return
+	}
+	user, err := apiCfg.DB.GetUserByAPIkey(r.Context(), apikey)
+
+	if err != nil {
+		respondWithError(w, 400, "Could not find user")
 		return
 	}
 

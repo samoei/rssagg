@@ -60,6 +60,7 @@ func main() {
 	v1Router.Get("/healthcheck", handleHealthCheck)
 	v1Router.Get("/err", handleErr)
 	v1Router.Post("/users", apiConfig.handlerCreateUser)
+	v1Router.Get("/users", apiConfig.handleGetUser)
 
 	router.Mount("/v1", v1Router)
 	server := &http.Server{
