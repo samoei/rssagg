@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
@@ -40,10 +41,12 @@ func main() {
 	if err != nil {
 		log.Fatal("Could not connect to the database", err)
 	}
-
+	db := database.New(conn)
 	apiConfig := apiConfig{
-		DB: database.New(conn),
+		DB: db,
 	}
+
+	go startScraping(db, 10, time.Minute)
 
 	router := chi.NewRouter()
 
@@ -61,6 +64,7 @@ func main() {
 	v1Router.Get("/err", handleErr)
 	v1Router.Post("/users", apiConfig.handlerCreateUser)
 	v1Router.Get("/users", apiConfig.middlewareAuth(apiConfig.handleGetUser))
+	v1Router.Get("/posts", apiConfig.middlewareAuth(apiConfig.handlerGetPostForUser))
 
 	v1Router.Post("/feeds", apiConfig.middlewareAuth(apiConfig.handlerCreateFeed))
 	v1Router.Get("/feeds", apiConfig.handlerGetFeeds)
@@ -73,7 +77,7 @@ func main() {
 		Handler: router,
 		Addr:    ":" + portString,
 	}
-	fmt.Printf("Server starting on port %v", portString)
+	fmt.Printf("Server starting on port %v\n", portString)
 	err = server.ListenAndServe()
 
 	if err != nil {
